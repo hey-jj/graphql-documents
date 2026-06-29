@@ -33,3 +33,7 @@ short block string stays inline | query A { f(x: """short""") } | query A { f(x:
 multiline block string collapses | query A { f(x: """ aaa bbb """) } | query A { f(x: """ aaa bbb """) }
 nested non-null list type | query A($x: [[Int!]!]!) { f } | query A($x: [[Int!]!]!) { f }
 default value enum | query A($x: Color = RED) { f } | query A($x: Color = RED) { f }
+mutation fragment keeps directive order | mutation A { ...F b a } fragment F on M @z @a @m { c b a } | fragment F on M @z @a @m { a b c } mutation A { ...F b a }
+query fragment sorts directives | query A { ...F } fragment F on Q @z @a @m { c b a } | fragment F on Q @a @m @z { a b c } query A { ...F }
+mutation fragment keeps variable order | mutation A { ...F } fragment F($c: Int, $a: Int, $b: Int) on M @z @a { x } | fragment F($c: Int, $a: Int, $b: Int) on M @z @a { x } mutation A { ...F }
+mutation fragment still sorts directive args | mutation A { ...F } fragment F on M @z(c: 1, a: 2, b: 3) { x } | fragment F on M @z(a: 2, b: 3, c: 1) { x } mutation A { ...F }

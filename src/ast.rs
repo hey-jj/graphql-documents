@@ -79,7 +79,7 @@ pub struct VariableDefinition {
     /// The variable name without the leading `$`.
     pub variable: String,
     /// The declared type.
-    pub var_type: Type,
+    pub ty: Type,
     /// The default value, if any.
     pub default_value: Option<Value>,
     /// Directives applied to the variable definition.

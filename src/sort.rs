@@ -4,10 +4,13 @@
 //! definitions, and directives into a stable, name-based order. Mutation
 //! top-level selections keep source order because mutation field execution
 //! order is significant. That "do not sort" property propagates into inline
-//! fragments nested directly inside the preserved selection set.
+//! fragments nested directly inside the preserved selection set. A fragment
+//! spread at that preserved level also pins the referenced fragment
+//! definition's directive and variable-definition order.
 
 use crate::ast::*;
 use crate::printer::print_selection;
+use std::collections::HashSet;
 
 const PREFIX_FIELD: &str = "0";
 const PREFIX_FRAGMENT_SPREAD: &str = "1";
@@ -30,10 +33,48 @@ const PREFIX_INLINE_FRAGMENT: &str = "2";
 /// - A mutation's top-level selection set keeps source order, and so does any
 ///   inline fragment nested directly within it, recursively.
 pub fn sort_executable_document(document: &Document) -> Document {
+    let ignored_fragments = collect_ignored_fragments(document);
     let mut definitions: Vec<Definition> = document.definitions.clone();
     sort_definitions(&mut definitions);
-    let definitions = definitions.iter().map(sort_definition).collect();
+    let definitions = definitions
+        .iter()
+        .map(|def| sort_definition(def, &ignored_fragments))
+        .collect();
     Document { definitions }
+}
+
+/// Collect names of fragments spread at a mutation's preserved top level.
+///
+/// A fragment spread that is a direct child of a preserved selection list marks
+/// its target fragment as ignored. The preserved region starts at a mutation's
+/// top-level selection set and propagates through inline fragments nested
+/// directly inside, recursively. It does not propagate through field children.
+fn collect_ignored_fragments(document: &Document) -> HashSet<String> {
+    let mut ignored = HashSet::new();
+    for def in &document.definitions {
+        if let Definition::Operation(op) = def {
+            if op.operation == OperationType::Mutation {
+                collect_ignored_in_set(&op.selection_set, &mut ignored);
+            }
+        }
+    }
+    ignored
+}
+
+/// Record fragment spreads directly in a preserved selection set and recurse
+/// into inline-fragment children, which stay preserved.
+fn collect_ignored_in_set(set: &SelectionSet, ignored: &mut HashSet<String>) {
+    for selection in &set.selections {
+        match selection {
+            Selection::FragmentSpread(spread) => {
+                ignored.insert(spread.name.clone());
+            }
+            Selection::InlineFragment(inline) => {
+                collect_ignored_in_set(&inline.selection_set, ignored);
+            }
+            Selection::Field(_) => {}
+        }
+    }
 }
 
 /// Order definitions by kind then name. Fragment kind sorts before operation
@@ -75,10 +116,12 @@ fn optional_name_cmp(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {
     }
 }
 
-fn sort_definition(def: &Definition) -> Definition {
+fn sort_definition(def: &Definition, ignored_fragments: &HashSet<String>) -> Definition {
     match def {
         Definition::Operation(op) => Definition::Operation(sort_operation(op)),
-        Definition::Fragment(frag) => Definition::Fragment(sort_fragment_definition(frag)),
+        Definition::Fragment(frag) => {
+            Definition::Fragment(sort_fragment_definition(frag, ignored_fragments))
+        }
     }
 }
 
@@ -94,7 +137,23 @@ fn sort_operation(op: &OperationDefinition) -> OperationDefinition {
     }
 }
 
-fn sort_fragment_definition(frag: &FragmentDefinition) -> FragmentDefinition {
+fn sort_fragment_definition(
+    frag: &FragmentDefinition,
+    ignored_fragments: &HashSet<String>,
+) -> FragmentDefinition {
+    // A fragment spread at a mutation's preserved top level suppresses sorting
+    // of this fragment's directive list and variable-definition list. The body
+    // still sorts, and directive arguments still sort, because those live in
+    // separate nodes that the suppression does not reach.
+    if ignored_fragments.contains(&frag.name) {
+        return FragmentDefinition {
+            name: frag.name.clone(),
+            variable_definitions: sort_ignored_variable_definitions(&frag.variable_definitions),
+            type_condition: frag.type_condition.clone(),
+            directives: sort_directive_arguments(&frag.directives),
+            selection_set: sort_selection_set(&frag.selection_set, false),
+        };
+    }
     FragmentDefinition {
         name: frag.name.clone(),
         variable_definitions: sort_variable_definitions(&frag.variable_definitions),
@@ -105,18 +164,25 @@ fn sort_fragment_definition(frag: &FragmentDefinition) -> FragmentDefinition {
 }
 
 fn sort_variable_definitions(defs: &[VariableDefinition]) -> Vec<VariableDefinition> {
-    let mut defs: Vec<VariableDefinition> = defs
-        .iter()
+    let mut defs = sort_ignored_variable_definitions(defs);
+    defs.sort_by(|a, b| utf16_cmp(&a.variable, &b.variable));
+    defs
+}
+
+/// Transform each variable definition but keep the list in source order.
+///
+/// Directive arguments still sort. The directive list and the list of variable
+/// definitions both keep source order.
+fn sort_ignored_variable_definitions(defs: &[VariableDefinition]) -> Vec<VariableDefinition> {
+    defs.iter()
         .map(|d| VariableDefinition {
             variable: d.variable.clone(),
-            var_type: d.var_type.clone(),
+            ty: d.ty.clone(),
             default_value: d.default_value.clone(),
             // Variable-definition directives keep order. Their arguments sort.
             directives: sort_directive_arguments(&d.directives),
         })
-        .collect();
-    defs.sort_by(|a, b| utf16_cmp(&a.variable, &b.variable));
-    defs
+        .collect()
 }
 
 /// Sort each directive's arguments and reorder the list by directive name.

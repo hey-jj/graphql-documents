@@ -96,7 +96,7 @@ fn print_operation_variable_definitions(defs: &[VariableDefinition]) -> String {
 }
 
 fn print_variable_definition(def: &VariableDefinition) -> String {
-    let mut out = format!("${}: {}", def.variable, print_type(&def.var_type));
+    let mut out = format!("${}: {}", def.variable, print_type(&def.ty));
     if let Some(default) = &def.default_value {
         out.push_str(" = ");
         out.push_str(&print_value(default));

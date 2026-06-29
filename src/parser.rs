@@ -245,7 +245,7 @@ impl<'a> Parser<'a> {
             self.expect_byte(b'$')?;
             let variable = self.parse_name()?;
             self.expect_byte(b':')?;
-            let var_type = self.parse_type()?;
+            let ty = self.parse_type()?;
             let default_value = if self.consume_byte(b'=') {
                 Some(self.parse_value(true)?)
             } else {
@@ -254,7 +254,7 @@ impl<'a> Parser<'a> {
             let directives = self.parse_directives()?;
             defs.push(VariableDefinition {
                 variable,
-                var_type,
+                ty,
                 default_value,
                 directives,
             });
