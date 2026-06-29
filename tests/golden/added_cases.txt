@@ -1,0 +1,35 @@
+# Cases covering behaviors beyond the core golden set. Captured from the
+# canonical reference behavior. Format matches cases.txt: name | input | expected
+field arguments are not sorted | query A { f(c: 1, b: 2, a: 3) } | query A { f(c: 1, b: 2, a: 3) }
+directive arguments sorted | query A { f @x(c: 1, a: 2, b: 3) } | query A { f @x(a: 2, b: 3, c: 1) }
+field directives not sorted | query A { f @z @a @m } | query A { f @z @a @m }
+operation directives not sorted | query A @z @a @m { f } | query A @z @a @m { f }
+spread directives sorted | query A { ...F @z @a @m } fragment F on Q { x } | fragment F on Q { x } query A { ...F @a @m @z }
+inline fragment directives sorted | query A { ... on Q @z @a @m { f } } | query A { ... on Q @a @m @z { f } }
+fragment definition directives sorted | fragment F on Q @z @a @m { f } query A { ...F } | fragment F on Q @a @m @z { f } query A { ...F }
+variable definitions sorted | query A($c: Int, $a: Int, $b: Int) { f } | query A($a: Int, $b: Int, $c: Int) { f }
+variable definition directives not sorted | query A($x: Int @z @a) { f } | query A($x: Int @z @a) { f }
+field spread inline ordering | query A { ...S b ... on T { a } } | query A { b ...S ... on T { a } }
+inline fragments different type conditions | query A { ... on Z { a } ... on A { a } } | query A { ... on A { a } ... on Z { a } }
+subscriptions are sorted | subscription A { c b a } | subscription A { a b c }
+multiple operations sorted by name | query B { a } query A { a } mutation C { a } | query A { a } query B { a } mutation C { a }
+nested inline selection sorted | query A { ... on Q { c b a } } | query A { ... on Q { a b c } }
+mutation nested field selection sorted | mutation A { b a x { c b a } } | mutation A { b a x { a b c } }
+mutation fragment spread keeps definition sorted | mutation A { ...Frag b a } fragment Frag on M { c b a } | fragment Frag on M { a b c } mutation A { ...Frag b a }
+aliases sort by field name | query A { z: f y: g } | query A { z: f y: g }
+anonymous query shorthand | { a } | { a }
+list and object values | query A { f(x: [1, 2], y: {b: 1, a: 2}) } | query A { f(x: [1, 2], y: { b: 1, a: 2 }) }
+empty object value | query A { f(x: {}) } | query A { f(x: { }) }
+mutation deep inline preserved | mutation A { ... on M { c b ... on N { z y x } } a } | mutation A { ... on M { c b ... on N { z y x } } a }
+mutation field child inline sorted | mutation A { f { ... on Q { c b a } } b a } | mutation A { f { ... on Q { a b c } } b a }
+inline key uses unsorted nested children | query A { ... on Q { a { d c } } ... on Q { a { c e } } } | query A { ... on Q { a { c e } } ... on Q { a { c d } } }
+inline key flips on nested children | query A { ... on Q { a { z b } } ... on Q { a { y c } } } | query A { ... on Q { a { c y } } ... on Q { a { b z } } }
+anonymous query sorts after named operations | mutation OD { g: f a } query { b } | mutation OD { g: f a } { b }
+operation directive arguments sorted | query A @x(c: 1, a: 2, b: 3) { f } | query A @x(a: 2, b: 3, c: 1) { f }
+long field arguments wrap and drop commas | query A { field(argumentnumberone: 1, argumentnumbertwo: 2, argumentnumberthree: 3, four: 4) } | query A { field( argumentnumberone: 1 argumentnumbertwo: 2 argumentnumberthree: 3 four: 4 ) }
+long list value wraps | query A { f(x: [1111111111, 2222222222, 3333333333, 4444444444, 5555555555, 6666666666, 7777777777]) } | query A { f( x: [ 1111111111 2222222222 3333333333 4444444444 5555555555 6666666666 7777777777 ] ) }
+long object value wraps | query A { f(x: { aaaaaaaaaa: 1, bbbbbbbbbb: 2, cccccccccc: 3, dddddddddd: 4, eeeeeeeeee: 5, ffffffffff: 6 }) } | query A { f( x: { aaaaaaaaaa: 1 bbbbbbbbbb: 2 cccccccccc: 3 dddddddddd: 4 eeeeeeeeee: 5 ffffffffff: 6 } ) }
+short block string stays inline | query A { f(x: """short""") } | query A { f(x: """short""") }
+multiline block string collapses | query A { f(x: """ aaa bbb """) } | query A { f(x: """ aaa bbb """) }
+nested non-null list type | query A($x: [[Int!]!]!) { f } | query A($x: [[Int!]!]!) { f }
+default value enum | query A($x: Color = RED) { f } | query A($x: Color = RED) { f }

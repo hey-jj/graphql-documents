@@ -1,0 +1,8 @@
+# Canonical golden cases. Each non-comment line is one case:
+#   name | input | expected
+# Fields are separated by " | ". Inputs and expected outputs are single line.
+print simple document | query A { c b a } | query A { a b c }
+fragments are always before query operations | query A { ...B ...A c b a } fragment B on Query { c b a } fragment A on Query { c b a } | fragment A on Query { a b c } fragment B on Query { a b c } query A { a b c ...A ...B }
+inline fragments sorted by selection set | query A { ... on Query { b } ... on Query { a } } | query A { ... on Query { a } ... on Query { b } }
+inline fragments sorted by deep selection set | query A { ... on Query { a { ...B b } } ... on Query { a { ...B a } } } fragment B on Query { c } | fragment B on Query { c } query A { ... on Query { a { a ...B } } ... on Query { a { b ...B } } }
+mutation order preserved | mutation A { ... on Mutation { c b d } c { d e { b a } f } b a } | mutation A { ... on Mutation { c b d } c { d e { a b } f } b a }
