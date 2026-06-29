@@ -6,7 +6,7 @@
 //! of scope.
 
 /// A parsed GraphQL document. Holds the top-level definitions in source order.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct Document {
     /// Top-level definitions: operations and fragment definitions.
     pub definitions: Vec<Definition>,
@@ -14,6 +14,7 @@ pub struct Document {
 
 /// A top-level definition in a document.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Definition {
     /// An operation: query, mutation, or subscription.
     Operation(OperationDefinition),
@@ -88,6 +89,7 @@ pub struct VariableDefinition {
 
 /// A type reference: named, list, or non-null.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Type {
     /// A named type like `Int`.
     Named(String),
@@ -98,7 +100,7 @@ pub enum Type {
 }
 
 /// A set of selections enclosed in braces.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct SelectionSet {
     /// The selections in this set.
     pub selections: Vec<Selection>,
@@ -106,6 +108,7 @@ pub struct SelectionSet {
 
 /// One member of a selection set.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Selection {
     /// A field selection.
     Field(Field),
@@ -170,6 +173,7 @@ pub struct Directive {
 
 /// A GraphQL value.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Value {
     /// A variable reference `$name`.
     Variable(String),
