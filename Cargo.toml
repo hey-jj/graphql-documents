@@ -6,5 +6,7 @@ description = "canonical/deterministic GraphQL executable document sorting and p
 license = "MIT"
 repository = "https://github.com/hey-jj/graphql-executable-documents"
 readme = "README.md"
+keywords = ["graphql", "canonical", "sort", "printer", "persisted"]
+categories = ["parser-implementations", "encoding"]
 
 [dependencies]
