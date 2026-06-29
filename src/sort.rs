@@ -223,9 +223,11 @@ fn sort_selection_set(set: &SelectionSet, ignored: bool) -> SelectionSet {
 
     // Order by keys computed from the original nodes, then recurse into the
     // reordered nodes. Order is fixed before descending into children, so keys
-    // see source-order nested children.
+    // see source-order nested children. The key is cached once per selection,
+    // which matters because the inline-fragment key prints and normalizes the
+    // inner selection set.
     let mut ordered: Vec<&Selection> = set.selections.iter().collect();
-    ordered.sort_by(|a, b| utf16_cmp(&selection_key(a), &selection_key(b)));
+    ordered.sort_by_cached_key(|s| utf16_key(s));
     let selections = ordered.into_iter().map(sort_selection).collect();
     SelectionSet { selections }
 }
@@ -308,13 +310,22 @@ fn selection_key(selection: &Selection) -> String {
 /// each selection are printed in their source order, not recursively sorted.
 fn build_inline_fragment_key(set: &SelectionSet) -> String {
     let mut ordered: Vec<&Selection> = set.selections.iter().collect();
-    ordered.sort_by(|a, b| utf16_cmp(&selection_key(a), &selection_key(b)));
+    ordered.sort_by_cached_key(|s| utf16_key(s));
     let joined = ordered
         .iter()
         .map(|s| print_selection(s))
         .collect::<Vec<_>>()
         .join(" ");
     crate::normalize::normalize_whitespace(&joined)
+}
+
+/// The UTF-16 code-unit form of a selection's sort key.
+///
+/// `Vec<u16>` orders lexicographically by code unit, which matches JavaScript's
+/// default string comparison. Caching this once per selection avoids rebuilding
+/// the key on every comparison.
+fn utf16_key(selection: &Selection) -> Vec<u16> {
+    selection_key(selection).encode_utf16().collect()
 }
 
 /// Compare two strings by UTF-16 code units, matching JavaScript's default
