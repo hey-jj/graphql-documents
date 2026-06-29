@@ -9,7 +9,7 @@ mod common;
 
 use common::{golden_path, load_cases};
 use graphql_executable_documents::{
-    normalize_whitespace, parse, print, print_executable_graphql_document, sort_executable_document,
+    canonicalize, normalize_whitespace, parse, print_pretty, sort_executable_document,
 };
 
 fn check_file(file: &str) {
@@ -19,7 +19,7 @@ fn check_file(file: &str) {
         let document =
             parse(&case.input).unwrap_or_else(|e| panic!("parse failed for `{}`: {e}", case.name));
 
-        let printed = print_executable_graphql_document(&document);
+        let printed = canonicalize(&document);
         assert_eq!(
             printed, case.expected,
             "\ncase:     {}\ninput:    {}\nexpected: {}\ngot:      {}",
@@ -29,7 +29,7 @@ fn check_file(file: &str) {
         // The two public functions must agree: sorting then printing then
         // normalizing yields the same canonical string.
         let sorted = sort_executable_document(&document);
-        let via_sort = normalize_whitespace(&print(&sorted));
+        let via_sort = normalize_whitespace(&print_pretty(&sorted));
         assert_eq!(
             via_sort, case.expected,
             "sort+print disagreed for case `{}`",
@@ -55,8 +55,8 @@ fn core_output_is_idempotent() {
     // fragments whose only difference is deep. That quirk is intentional and is
     // exercised by the added cases, so idempotence is checked on the core set.
     for case in load_cases(golden_path("cases.txt")) {
-        let once = print_executable_graphql_document(&parse(&case.input).unwrap());
-        let twice = print_executable_graphql_document(&parse(&once).unwrap());
+        let once = canonicalize(&parse(&case.input).unwrap());
+        let twice = canonicalize(&parse(&once).unwrap());
         assert_eq!(once, twice, "not idempotent for case `{}`", case.name);
     }
 }
@@ -65,7 +65,7 @@ fn core_output_is_idempotent() {
 fn output_has_no_whitespace_runs() {
     for file in ["cases.txt", "added_cases.txt"] {
         for case in load_cases(golden_path(file)) {
-            let out = print_executable_graphql_document(&parse(&case.input).unwrap());
+            let out = canonicalize(&parse(&case.input).unwrap());
             assert!(
                 !out.contains("  "),
                 "double space in `{}`: {out}",

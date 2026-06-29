@@ -16,10 +16,10 @@ The crate has no dependencies. It ships its own GraphQL parser and printer.
 ## Usage
 
 ```rust
-use graphql_executable_documents::{parse, print_executable_graphql_document};
+use graphql_executable_documents::{canonicalize, parse};
 
 let document = parse("query A { c b a }").unwrap();
-let canonical = print_executable_graphql_document(&document);
+let canonical = canonicalize(&document);
 assert_eq!(canonical, "query A { a b c }");
 ```
 
@@ -52,6 +52,8 @@ What stays in source order:
 - Operation directives and variable-definition directives.
 - A mutation's top-level selections, since execution order matters. This carries
   into inline fragments nested directly inside.
+- The directives and variable definitions of a fragment spread at a mutation's
+  top level. The fragment body still sorts.
 
 The printed output collapses every run of whitespace to one space and trims the
 ends, so the result is always a single line.
