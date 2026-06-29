@@ -18,8 +18,8 @@ mutation nested field selection sorted | mutation A { b a x { c b a } } | mutati
 mutation fragment spread keeps definition sorted | mutation A { ...Frag b a } fragment Frag on M { c b a } | fragment Frag on M { a b c } mutation A { ...Frag b a }
 aliases sort by field name | query A { z: f y: g } | query A { z: f y: g }
 anonymous query shorthand | { a } | { a }
-list and object values | query A { f(x: [1, 2], y: {b: 1, a: 2}) } | query A { f(x: [1, 2], y: { b: 1, a: 2 }) }
-empty object value | query A { f(x: {}) } | query A { f(x: { }) }
+list and object values | query A { f(x: [1, 2], y: {b: 1, a: 2}) } | query A { f(x: [1, 2], y: {b: 1, a: 2}) }
+empty object value | query A { f(x: {}) } | query A { f(x: {}) }
 mutation deep inline preserved | mutation A { ... on M { c b ... on N { z y x } } a } | mutation A { ... on M { c b ... on N { z y x } } a }
 mutation field child inline sorted | mutation A { f { ... on Q { c b a } } b a } | mutation A { f { ... on Q { a b c } } b a }
 inline key uses unsorted nested children | query A { ... on Q { a { d c } } ... on Q { a { c e } } } | query A { ... on Q { a { c e } } ... on Q { a { c d } } }
@@ -27,12 +27,20 @@ inline key flips on nested children | query A { ... on Q { a { z b } } ... on Q 
 anonymous query sorts after named operations | mutation OD { g: f a } query { b } | mutation OD { g: f a } { b }
 operation directive arguments sorted | query A @x(c: 1, a: 2, b: 3) { f } | query A @x(a: 2, b: 3, c: 1) { f }
 long field arguments wrap and drop commas | query A { field(argumentnumberone: 1, argumentnumbertwo: 2, argumentnumberthree: 3, four: 4) } | query A { field( argumentnumberone: 1 argumentnumbertwo: 2 argumentnumberthree: 3 four: 4 ) }
-long list value wraps | query A { f(x: [1111111111, 2222222222, 3333333333, 4444444444, 5555555555, 6666666666, 7777777777]) } | query A { f( x: [ 1111111111 2222222222 3333333333 4444444444 5555555555 6666666666 7777777777 ] ) }
-long object value wraps | query A { f(x: { aaaaaaaaaa: 1, bbbbbbbbbb: 2, cccccccccc: 3, dddddddddd: 4, eeeeeeeeee: 5, ffffffffff: 6 }) } | query A { f( x: { aaaaaaaaaa: 1 bbbbbbbbbb: 2 cccccccccc: 3 dddddddddd: 4 eeeeeeeeee: 5 ffffffffff: 6 } ) }
+long list value stays inline | query A { f(x: [1111111111, 2222222222, 3333333333, 4444444444, 5555555555, 6666666666, 7777777777]) } | query A { f( x: [1111111111, 2222222222, 3333333333, 4444444444, 5555555555, 6666666666, 7777777777] ) }
+long object value stays inline | query A { f(x: { aaaaaaaaaa: 1, bbbbbbbbbb: 2, cccccccccc: 3, dddddddddd: 4, eeeeeeeeee: 5, ffffffffff: 6 }) } | query A { f( x: {aaaaaaaaaa: 1, bbbbbbbbbb: 2, cccccccccc: 3, dddddddddd: 4, eeeeeeeeee: 5, ffffffffff: 6} ) }
 short block string stays inline | query A { f(x: """short""") } | query A { f(x: """short""") }
 multiline block string collapses | query A { f(x: """ aaa bbb """) } | query A { f(x: """ aaa bbb """) }
 nested non-null list type | query A($x: [[Int!]!]!) { f } | query A($x: [[Int!]!]!) { f }
 default value enum | query A($x: Color = RED) { f } | query A($x: Color = RED) { f }
+empty list value | query A { f(x: []) } | query A { f(x: []) }
+nested object and list | query A { f(x: {a: [1, 2], b: {c: 3}}) } | query A { f(x: {a: [1, 2], b: {c: 3}}) }
+list of objects | query A { f(x: [{a: 1}, {b: 2}]) } | query A { f(x: [{a: 1}, {b: 2}]) }
+boolean null enum values | query A { f(a: true, b: false, c: null, d: ENUM_VAL) } | query A { f(a: true, b: false, c: null, d: ENUM_VAL) }
+negative int | query A { f(x: -123) } | query A { f(x: -123) }
+numeric literals kept verbatim | query A { f(x: 1.0, y: 1.00, z: 1e5, w: 1.5E+3) } | query A { f(x: 1.0, y: 1.00, z: 1e5, w: 1.5E+3) }
+repeated same-name directives keep order | query A { f } fragment X on Q @d(b: 1) @d(a: 1) { x } | fragment X on Q @d(b: 1) @d(a: 1) { x } query A { f }
+inline fragment without type condition | query A { ... { b a } } | query A { ... { a b } }
 mutation fragment keeps directive order | mutation A { ...F b a } fragment F on M @z @a @m { c b a } | fragment F on M @z @a @m { a b c } mutation A { ...F b a }
 query fragment sorts directives | query A { ...F } fragment F on Q @z @a @m { c b a } | fragment F on Q @a @m @z { a b c } query A { ...F }
 mutation fragment keeps variable order | mutation A { ...F } fragment F($c: Int, $a: Int, $b: Int) on M @z @a { x } | fragment F($c: Int, $a: Int, $b: Int) on M @z @a { x } mutation A { ...F }

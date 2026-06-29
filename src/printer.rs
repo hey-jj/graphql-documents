@@ -2,14 +2,16 @@
 //!
 //! Output matches the canonical GraphQL printer: two-space indent,
 //! blank lines between top-level definitions, and a line-length rule that wraps
-//! long argument, list, object, and variable-definition lists across multiple
-//! lines. The public [`crate::print_executable_graphql_document`] then collapses
-//! the multi-line form into a single line, so the wrapping survives only as the
-//! loss of commas between wrapped items.
+//! long field arguments and variable-definition lists across multiple lines.
+//! List and object values always print on one line with comma separators. The
+//! public [`crate::canonicalize`] then collapses the multi-line form into a
+//! single line, so the wrapping survives only as the loss of commas between
+//! wrapped items.
 
 use crate::ast::*;
 
-/// Wrap argument, list, and object lists onto multiple lines past this width.
+/// Wrap field argument and variable-definition lists onto multiple lines past
+/// this width.
 const MAX_LINE_LENGTH: usize = 80;
 
 /// Print a whole document in canonical multi-line form.
@@ -200,24 +202,14 @@ fn print_value(value: &Value) -> String {
         Value::Enum(name) => name.clone(),
         Value::List(items) => {
             let values: Vec<String> = items.iter().map(print_value).collect();
-            let line = format!("[{}]", values.join(", "));
-            if utf16_len(&line) > MAX_LINE_LENGTH {
-                format!("[\n{}\n]", indent(&values.join("\n")))
-            } else {
-                line
-            }
+            format!("[{}]", values.join(", "))
         }
         Value::Object(fields) => {
             let entries: Vec<String> = fields
                 .iter()
                 .map(|f| format!("{}: {}", f.name, print_value(&f.value)))
                 .collect();
-            let line = format!("{{ {} }}", entries.join(", "));
-            if utf16_len(&line) > MAX_LINE_LENGTH {
-                block(&entries)
-            } else {
-                line
-            }
+            format!("{{{}}}", entries.join(", "))
         }
     }
 }
@@ -225,8 +217,9 @@ fn print_value(value: &Value) -> String {
 /// Escape and quote a string the way the canonical GraphQL printer does.
 ///
 /// Named escapes are used for backspace, form feed, newline, carriage return,
-/// tab, quote, and backslash. Other characters below U+0020 plus U+007F become
-/// `\uXXXX`. The forward slash is not escaped.
+/// tab, quote, and backslash. The rest of the escaped set prints as `\uXXXX`:
+/// the C0 controls below U+0020, U+007F, and the C1 block U+0080 through U+009F.
+/// The forward slash is not escaped.
 fn print_string(value: &str) -> String {
     let mut out = String::with_capacity(value.len() + 2);
     out.push('"');
@@ -239,7 +232,7 @@ fn print_string(value: &str) -> String {
             '\n' => out.push_str("\\n"),
             '\r' => out.push_str("\\r"),
             '\t' => out.push_str("\\t"),
-            c if c < ' ' || c == '\u{7f}' => {
+            c if c < ' ' || ('\u{7f}'..='\u{9f}').contains(&c) => {
                 out.push_str(&format!("\\u{:04X}", c as u32));
             }
             c => out.push(c),
