@@ -4,7 +4,7 @@
 //! characters, and Unicode whitespace that a `| `-separated fixture file cannot
 //! hold readably. Each case pins the exact canonical string.
 
-use graphql_executable_documents::{canonicalize, parse};
+use graphql_documents::{canonicalize, parse};
 
 fn canonical(input: &str) -> String {
     canonicalize(&parse(input).unwrap())

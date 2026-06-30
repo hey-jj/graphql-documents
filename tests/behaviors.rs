@@ -1,6 +1,6 @@
 //! Behavior tests for parsing, the AST shape, and structural invariants.
 
-use graphql_executable_documents::{
+use graphql_documents::{
     canonicalize, parse, sort_executable_document, Definition, OperationType, Selection,
 };
 

@@ -1,10 +1,10 @@
 [package]
-name = "graphql-executable-documents"
+name = "graphql-documents"
 version = "0.1.0"
 edition = "2021"
 description = "canonical/deterministic GraphQL executable document sorting and printing"
 license = "MIT"
-repository = "https://github.com/hey-jj/graphql-executable-documents"
+repository = "https://github.com/hey-jj/graphql-documents"
 readme = "README.md"
 keywords = ["graphql", "canonical", "sort", "printer", "persisted"]
 categories = ["parser-implementations", "encoding"]

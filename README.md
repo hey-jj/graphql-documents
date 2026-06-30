@@ -1,4 +1,4 @@
-# graphql-executable-documents
+# graphql-documents
 
 Turn a GraphQL executable document into a stable, single-line string. Two
 operations that mean the same thing but differ in field order or whitespace map
@@ -8,7 +8,7 @@ to the same output. Use it as a key for persisted operations and allow-lists.
 
 ```toml
 [dependencies]
-graphql-executable-documents = "0.1"
+graphql-documents = "0.1"
 ```
 
 The crate has no dependencies. It ships its own GraphQL parser and printer.
@@ -16,7 +16,7 @@ The crate has no dependencies. It ships its own GraphQL parser and printer.
 ## Usage
 
 ```rust
-use graphql_executable_documents::{canonicalize, parse};
+use graphql_documents::{canonicalize, parse};
 
 let document = parse("query A { c b a }").unwrap();
 let canonical = canonicalize(&document);
@@ -27,7 +27,7 @@ assert_eq!(canonical, "query A { a b c }");
 tree directly:
 
 ```rust
-use graphql_executable_documents::{parse, sort_executable_document};
+use graphql_documents::{parse, sort_executable_document};
 
 let document = parse("query A { c b a }").unwrap();
 let sorted = sort_executable_document(&document);

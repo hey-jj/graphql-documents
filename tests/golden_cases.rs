@@ -8,7 +8,7 @@
 mod common;
 
 use common::{golden_path, load_cases};
-use graphql_executable_documents::{
+use graphql_documents::{
     canonicalize, normalize_whitespace, parse, print_pretty, sort_executable_document,
 };
 

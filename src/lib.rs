@@ -9,7 +9,7 @@
 //! # Example
 //!
 //! ```
-//! use graphql_executable_documents::{canonicalize, parse};
+//! use graphql_documents::{canonicalize, parse};
 //!
 //! let document = parse("query A { c b a }").unwrap();
 //! assert_eq!(canonicalize(&document), "query A { a b c }");
@@ -65,7 +65,7 @@ pub use sort::sort_executable_document;
 /// # Example
 ///
 /// ```
-/// use graphql_executable_documents::{canonicalize, parse};
+/// use graphql_documents::{canonicalize, parse};
 ///
 /// let document = parse("query A { ...B ...A c b a }").unwrap();
 /// assert_eq!(canonicalize(&document), "query A { a b c ...A ...B }");

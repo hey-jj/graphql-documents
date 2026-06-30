@@ -3,7 +3,7 @@
 //! These mirror `str.replace(/\s+/g, ' ').trim()`, including the wider Unicode
 //! whitespace that the ECMAScript `\s` class matches.
 
-use graphql_executable_documents::normalize_whitespace;
+use graphql_documents::normalize_whitespace;
 
 #[test]
 fn collapses_runs_and_trims() {
