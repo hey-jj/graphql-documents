@@ -249,7 +249,7 @@ fn print_string(value: &str) -> String {
 /// inline as `"""text"""`.
 fn print_block_string(value: &str) -> String {
     let escaped = value.replace("\"\"\"", "\\\"\"\"");
-    let lines: Vec<&str> = split_string_lines(&escaped);
+    let lines: Vec<&str> = crate::parser::split_lines(&escaped);
     let is_single_line = lines.len() == 1;
 
     let force_leading_newline = lines.len() > 1
@@ -278,34 +278,6 @@ fn print_block_string(value: &str) -> String {
         result.push('\n');
     }
     format!("\"\"\"{result}\"\"\"")
-}
-
-/// Split on `\r\n`, `\n`, or `\r`, matching the GraphQL block-string split.
-fn split_string_lines(s: &str) -> Vec<&str> {
-    let mut lines = Vec::new();
-    let bytes = s.as_bytes();
-    let mut start = 0;
-    let mut i = 0;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'\r' => {
-                lines.push(&s[start..i]);
-                if bytes.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-                i += 1;
-                start = i;
-            }
-            b'\n' => {
-                lines.push(&s[start..i]);
-                i += 1;
-                start = i;
-            }
-            _ => i += 1,
-        }
-    }
-    lines.push(&s[start..]);
-    lines
 }
 
 fn starts_with_space_or_tab(line: &str) -> bool {

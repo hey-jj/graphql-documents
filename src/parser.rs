@@ -705,7 +705,8 @@ fn dedent_block_string(raw: &str) -> String {
     result.join("\n")
 }
 
-fn split_lines(s: &str) -> Vec<&str> {
+/// Split on `\r\n`, `\n`, or `\r`, matching the GraphQL block-string split.
+pub(crate) fn split_lines(s: &str) -> Vec<&str> {
     let mut lines = Vec::new();
     let bytes = s.as_bytes();
     let mut start = 0;
