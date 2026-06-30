@@ -1,5 +1,5 @@
-# Cases covering behaviors beyond the core golden set. Captured from the
-# canonical reference behavior. Format matches cases.txt: name | input | expected
+# Cases covering behaviors beyond the core golden set. Each pins the exact
+# canonical output. Format matches cases.txt: name | input | expected
 field arguments are not sorted | query A { f(c: 1, b: 2, a: 3) } | query A { f(c: 1, b: 2, a: 3) }
 directive arguments sorted | query A { f @x(c: 1, a: 2, b: 3) } | query A { f @x(a: 2, b: 3, c: 1) }
 field directives not sorted | query A { f @z @a @m } | query A { f @z @a @m }

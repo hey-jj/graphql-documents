@@ -25,7 +25,8 @@
 //!   fragment definitions.
 //! - Selection sets order fields first, then fragment spreads, then inline
 //!   fragments. Fields and spreads sort by name. Inline fragments sort by type
-//!   condition then by their recursively sorted inner selection set.
+//!   condition then by their inner selection set sorted one level deep. Only the
+//!   immediate inner selections affect that ordering, not deeper field order.
 //!
 //! # What is left alone
 //!
@@ -36,6 +37,14 @@
 //! - A fragment spread at a mutation's top level keeps that fragment
 //!   definition's directives and variable definitions in source order. The
 //!   fragment body still sorts.
+//!
+//! # Limits
+//!
+//! The canonical string is not a collision-free hash of the request text. Both
+//! sides of a comparison must canonicalize. Whitespace runs collapse
+//! everywhere, including inside string literals, so two string values differing
+//! only in whitespace map to the same output. To match the exact bytes a client
+//! sent, hash the client string directly.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]

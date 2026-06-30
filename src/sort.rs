@@ -28,7 +28,9 @@ const PREFIX_INLINE_FRAGMENT: &str = "2";
 ///   definitions keep source order.
 /// - Selection sets order fields first, then fragment spreads, then inline
 ///   fragments. Fields and spreads sort by name. Inline fragments sort by type
-///   condition then by their recursively sorted, printed inner selection set.
+///   condition then by their printed inner selection set sorted one level deep.
+///   Only the immediate inner selections affect that ordering, not deeper field
+///   order.
 /// - Field arguments are never sorted.
 /// - A mutation's top-level selection set keeps source order, and so does any
 ///   inline fragment nested directly within it, recursively.
@@ -104,9 +106,8 @@ fn definition_name(def: &Definition) -> Option<&str> {
     }
 }
 
-/// Compare optional names the way lodash compares a missing `name.value`. A
-/// present name sorts before a missing one, and two present names compare by
-/// UTF-16 code units.
+/// Compare optional names. A present name sorts before a missing one, and two
+/// present names compare by UTF-16 code units.
 fn optional_name_cmp(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {
     match (a, b) {
         (Some(a), Some(b)) => utf16_cmp(a, b),

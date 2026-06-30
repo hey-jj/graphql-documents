@@ -44,7 +44,8 @@ assert_eq!(sorted.definitions.len(), 1);
   definitions.
 - Selection sets order fields first, then fragment spreads, then inline
   fragments. Fields and spreads sort by name. Inline fragments sort by type
-  condition then by their recursively sorted inner selection set.
+  condition then by their inner selection set sorted one level deep. Only the
+  immediate inner selections affect that ordering, not deeper field order.
 
 What stays in source order:
 
@@ -57,6 +58,14 @@ What stays in source order:
 
 The printed output collapses every run of whitespace to one space and trims the
 ends, so the result is always a single line.
+
+## Limits
+
+The canonical string is not a collision-free hash of the request text. Both
+sides of a comparison must canonicalize. Whitespace runs collapse everywhere,
+including inside string literals, so two string values that differ only in
+whitespace map to the same output. To match the exact bytes a client sent, hash
+the client string directly.
 
 ## License
 
