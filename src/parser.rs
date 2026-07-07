@@ -241,6 +241,9 @@ impl<'a> Parser<'a> {
         if !self.consume_byte(b'(') {
             return Ok(defs);
         }
+        if self.peek() == Some(b')') {
+            return self.err("expected a variable definition");
+        }
         while self.peek() != Some(b')') {
             self.expect_byte(b'$')?;
             let variable = self.parse_name()?;
@@ -296,6 +299,9 @@ impl<'a> Parser<'a> {
         if !self.consume_byte(b'(') {
             return Ok(args);
         }
+        if self.peek() == Some(b')') {
+            return self.err("expected an argument");
+        }
         while self.peek() != Some(b')') {
             let name = self.parse_name()?;
             self.expect_byte(b':')?;
@@ -312,6 +318,11 @@ impl<'a> Parser<'a> {
     fn parse_selection_set(&mut self) -> Result<SelectionSet, ParseError> {
         self.expect_byte(b'{')?;
         let mut selections = Vec::new();
+        match self.peek() {
+            None => return self.err("unterminated selection set"),
+            Some(b'}') => return self.err("expected a selection"),
+            _ => {}
+        }
         while self.peek() != Some(b'}') {
             if self.peek_byte().is_none() {
                 return self.err("unterminated selection set");
@@ -324,10 +335,15 @@ impl<'a> Parser<'a> {
 
     fn parse_selection(&mut self) -> Result<Selection, ParseError> {
         if self.peek() == Some(b'.') {
-            // Spread: "...".
-            self.expect_byte(b'.')?;
-            self.expect_byte(b'.')?;
-            self.expect_byte(b'.')?;
+            self.pos += 1;
+            if self.peek_byte() != Some(b'.') {
+                return self.err("expected '...'");
+            }
+            self.pos += 1;
+            if self.peek_byte() != Some(b'.') {
+                return self.err("expected '...'");
+            }
+            self.pos += 1;
             // Inline fragment if "on", a directive, or a selection set follows.
             if self.peek_keyword("on") {
                 self.parse_name()?; // "on"
@@ -741,4 +757,29 @@ fn leading_whitespace(line: &str) -> usize {
 
 fn is_blank(line: &str) -> bool {
     line.bytes().all(|b| b == b' ' || b == b'\t')
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse;
+
+    #[test]
+    fn rejects_empty_selection_sets() {
+        assert!(parse("query Q { }").is_err());
+        assert!(parse("{ }").is_err());
+        assert!(parse("fragment F on Query { }").is_err());
+    }
+
+    #[test]
+    fn rejects_empty_argument_lists() {
+        assert!(parse("query Q() { f }").is_err());
+        assert!(parse("query Q { f() }").is_err());
+        assert!(parse("query Q { f @d() }").is_err());
+    }
+
+    #[test]
+    fn rejects_spaced_spread_punctuators() {
+        assert!(parse("query A { . . .Frag } fragment Frag on Query { id }").is_err());
+        assert!(parse("query A { .#comment\n..Frag } fragment Frag on Query { id }").is_err());
+    }
 }
