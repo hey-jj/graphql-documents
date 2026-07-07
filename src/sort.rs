@@ -298,7 +298,7 @@ fn selection_key(selection: &Selection) -> String {
         Selection::InlineFragment(inline) => {
             let type_condition = inline.type_condition.as_deref().unwrap_or("");
             let inner = build_inline_fragment_key(&inline.selection_set);
-            format!("{PREFIX_INLINE_FRAGMENT}{type_condition}{inner}")
+            format!("{PREFIX_INLINE_FRAGMENT}{type_condition}\0{inner}")
         }
     }
 }
@@ -334,4 +334,16 @@ fn utf16_key(selection: &Selection) -> Vec<u16> {
 /// keys that contain non-ASCII characters from string-literal values.
 fn utf16_cmp(a: &str, b: &str) -> std::cmp::Ordering {
     a.encode_utf16().cmp(b.encode_utf16())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{canonicalize, parse};
+
+    #[test]
+    fn inline_fragment_sort_keeps_type_condition_boundary() {
+        let out = canonicalize(&parse("query Q { ... on A { z } ... on AA { a } }").unwrap());
+
+        assert_eq!(out, "query Q { ... on A { z } ... on AA { a } }");
+    }
 }
